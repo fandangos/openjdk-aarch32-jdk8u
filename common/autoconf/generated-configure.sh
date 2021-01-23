@@ -4382,7 +4382,7 @@ VS_SDK_PLATFORM_NAME_2017=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1597148530
+DATE_WHEN_GENERATED=1596229451
 
 ###############################################################################
 #
@@ -13587,6 +13587,11 @@ test -n "$target_alias" &&
       VAR_OS_API=posix
       VAR_OS_ENV=solaris
       ;;
+    *android*)	
+      VAR_OS=linux	
+      VAR_OS_API=posix	
+      VAR_OS_ENV=linux	
+      ;;
     *darwin*)
       VAR_OS=macosx
       VAR_OS_API=posix
@@ -13730,6 +13735,11 @@ $as_echo "$OPENJDK_BUILD_OS-$OPENJDK_BUILD_CPU" >&6; }
       VAR_OS=solaris
       VAR_OS_API=posix
       VAR_OS_ENV=solaris
+      ;;
+    *android*)	
+      VAR_OS=linux	
+      VAR_OS_API=posix	
+      VAR_OS_ENV=linux	
       ;;
     *darwin*)
       VAR_OS=macosx
@@ -13991,8 +14001,6 @@ $as_echo "$COMPILE_TYPE" >&6; }
   elif test "x$OPENJDK_TARGET_OS" != xmacosx && test "x$OPENJDK_TARGET_CPU" = xx86_64; then
     # On all platforms except macosx, we replace x86_64 with amd64.
     OPENJDK_TARGET_CPU_OSARCH="amd64"
-  elif test "x$OPENJDK_TARGET_CPU" = xaarch32; then
-    OPENJDK_TARGET_CPU_OSARCH="arm"
   fi
 
 
@@ -14623,19 +14631,13 @@ $as_echo "$with_jvm_variants" >&6; }
 
 
   INCLUDE_SA=true
-  if test "x$JVM_VARIANT_ZERO" = xtrue; then
+  if test "x$JVM_VARIANT_ZERO" = xtrue ; then
     INCLUDE_SA=false
   fi
-  if test "x$JVM_VARIANT_ZEROSHARK" = xtrue; then
-    INCLUDE_SA=false
-  fi
-  if test "x$OPENJDK_TARGET_CPU" = xaarch32; then
+  if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
     INCLUDE_SA=false
   fi
   if test "x$VAR_CPU" = xppc64 -o "x$VAR_CPU" = xppc64le ; then
-    INCLUDE_SA=false
-  fi
-  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
     INCLUDE_SA=false
   fi
 
@@ -54190,4 +54192,3 @@ $CHMOD +x $OUTPUT_ROOT/compare.sh
     printf "consider using a supported version unless you know what you are doing.\n"
     printf "\n"
   fi
-
