@@ -30,7 +30,8 @@
 DIR=`dirname $0`
 
 # First, filter out everything that doesn't begin with "aarch32-" or "aarch64-"
-if ! echo $* | grep -E '^(aarch32-|aarch64-)' >/dev/null; then
+# or the mobile platforms (ios and android)
+if ! echo $* | egrep "^(aarch32-|aarch64-)|-ios|-android" 
     . $DIR/autoconf-config.sub "$@"
     # autoconf-config.sub exits, so we never reach here, but just in
     # case we do:
@@ -43,6 +44,14 @@ while test $# -gt 0; do
     case $1 in
         --) # Stop option processing
             shift; break ;;
+        *-ios* )
+ 	    echo $1
+ 	    exit
+ 	    ;;
+        *-android* )
+            echo $1
+            exit
+            ;;
         aarch32-*)
             config=`echo $1 | sed 's/^aarch32-/arm-/'`
             sub_args="$sub_args $config"
