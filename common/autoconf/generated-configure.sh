@@ -14001,6 +14001,8 @@ $as_echo "$COMPILE_TYPE" >&6; }
   elif test "x$OPENJDK_TARGET_OS" != xmacosx && test "x$OPENJDK_TARGET_CPU" = xx86_64; then
     # On all platforms except macosx, we replace x86_64 with amd64.
     OPENJDK_TARGET_CPU_OSARCH="amd64"
+  elif test "x$OPENJDK_TARGET_CPU" = xaarch32; then		
+     OPENJDK_TARGET_CPU_OSARCH="arm"		
   fi
 
 
@@ -14637,8 +14639,14 @@ $as_echo "$with_jvm_variants" >&6; }
   if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
     INCLUDE_SA=false
   fi
+  if test "x$OPENJDK_TARGET_CPU" = xaarch32; then
+    INCLUDE_SA=false
+  fi
   if test "x$VAR_CPU" = xppc64 -o "x$VAR_CPU" = xppc64le ; then
     INCLUDE_SA=false
+  fi
+  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then		
+    INCLUDE_SA=false		
   fi
 
 
