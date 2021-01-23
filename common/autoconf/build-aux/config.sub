@@ -31,7 +31,7 @@ DIR=`dirname $0`
 
 # First, filter out everything that doesn't begin with "aarch32-" or "aarch64-"
 # or the mobile platforms (ios and android)
-if ! echo $* | egrep "^(aarch32-|aarch64-)|-ios|-android" 
+if ! echo $* | egrep "^aarch32-|-ios|-android" 
     . $DIR/autoconf-config.sub "$@"
     # autoconf-config.sub exits, so we never reach here, but just in
     # case we do:
