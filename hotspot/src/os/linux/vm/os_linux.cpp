@@ -95,17 +95,28 @@
 # include <string.h>
 # include <syscall.h>
 # include <sys/sysinfo.h>
-#ifndef __UCLIBC__
+#ifdef __ANDROID__
+// Our own impl
+ # include "gnu/libc-version.h"
+#elif !defined(__UCLIBC__)
 # include <gnu/libc-version.h>
 #endif
 # include <sys/ipc.h>
+#if !defined(__ANDROID__)
 # include <sys/shm.h>
+#endif
 # include <link.h>
 # include <stdint.h>
 # include <inttypes.h>
 # include <sys/ioctl.h>
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
+
+#ifdef __ANDROID__
+# define lseek lseek64
+# define open open64
+# define off_t off64_t
+#endif
 
 #ifndef _GNU_SOURCE
   #define _GNU_SOURCE
@@ -273,7 +284,7 @@ bool os::have_special_privileges() {
   #ifdef __ia64__
     #define SYS_gettid 1105
   #else
-    #ifdef __i386__
+    #if defined(__i386__) || defined(__arm__)
       #define SYS_gettid 224
     #else
       #ifdef __amd64__
@@ -1789,6 +1800,9 @@ bool os::dll_address_to_library_name(address addr, char* buf,
   assert(buf != NULL, "sanity check");
 
   Dl_info dlinfo;
+
+  // Android bionic libc does not have the bug below (?)
+#ifndef __ANDROID__
   struct _address_to_library_name data;
 
   // There is a bug in old glibc dladdr() implementation that it could resolve
@@ -1807,6 +1821,7 @@ bool os::dll_address_to_library_name(address addr, char* buf,
      if (offset) *offset = addr - data.base;
      return true;
   }
+#endif // !__ANDROID__
   if (dladdr((void*)addr, &dlinfo) != 0) {
     if (dlinfo.dli_fname != NULL) {
       jio_snprintf(buf, buflen, "%s", dlinfo.dli_fname);
