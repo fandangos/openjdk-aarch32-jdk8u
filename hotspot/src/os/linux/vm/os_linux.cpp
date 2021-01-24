@@ -75,7 +75,7 @@
 # include <sys/stat.h>
 # include <sys/select.h>
 # include <pthread.h>
-# include <signal.h>
+//# include <signal.h>
 # include <errno.h>
 # include <dlfcn.h>
 # include <stdio.h>
