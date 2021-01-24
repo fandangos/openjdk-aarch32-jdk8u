@@ -43,7 +43,7 @@ typedef uint16_t char16_t;
 #include <string.h>
 #include <uchar.h>
 
-#include "bionic_mbstate.h"
+#include <bionic_mbstate.h>
 
 
 #ifdef __cplusplus
