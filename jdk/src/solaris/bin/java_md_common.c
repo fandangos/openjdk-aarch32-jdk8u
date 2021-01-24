@@ -24,6 +24,10 @@
  */
 #include "java.h"
 
+#ifdef __ANDROID__
+#define S_IEXEC S_IXUSR
+#endif
+
 /*
  * If app is "/foo/bin/javac", or "/foo/bin/sparcv9/javac" then put
  * "/foo" into buf.
