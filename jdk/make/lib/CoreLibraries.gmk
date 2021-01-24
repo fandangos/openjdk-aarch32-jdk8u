@@ -30,27 +30,6 @@ WIN_VERIFY_LIB := $(JDK_OUTPUTDIR)/objs/libverify/verify.lib
 
 ##########################################################################################
 
-ifeq ($(OPENJDK_TARGET_OS), linux)
-#    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libtinyiconv/mapfile-vers, \
-BUILD_LIBTINYICONV_SRC := iconv.cpp
-$(eval $(call SetupNativeCompilation,BUILD_LIBTINYICONV, \
-    LIBRARY := tinyiconv, \
-    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/tinyiconv, \
-    LANG := C++, \
-    OPTIMIZATION := LOW, \
-    CFLAGS := $(CXXFLAGS_JDKLIB) \
-        -I$(JDK_TOPDIR)/src/share/tinyiconv, \
-    LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
-        $(call SET_SHARED_LIBRARY_ORIGIN), \
-    LDFLAGS_SUFFIX_posix := $(LIBCXX) -lc, \
-    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libtinyiconv, \
-    DEBUG_SYMBOLS := true))
-
-BUILD_LIBRARIES += $(BUILD_LIBTINYICONV)
-endif
-
-##########################################################################################
 
 BUILD_LIBFDLIBM_OPTIMIZATION := NONE
 
@@ -569,7 +548,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNPT, \
         -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnpt/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
-        $(call SET_SHARED_LIBRARY_ORIGIN) -ltinyiconv, \
+        $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_macosx := -liconv, \
     LDFLAGS_SUFFIX_windows := -export:nptInitialize -export:nptTerminate, \
     LDFLAGS_SUFFIX_solaris := -lc, \
