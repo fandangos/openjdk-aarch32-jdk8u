@@ -114,13 +114,13 @@ PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 #ifdef __ANDROID__
 # define DISABLE_SHM
 #endif
-
+/*
 #ifdef __ANDROID__
 # define lseek lseek64
 # define open open64
 # define off_t off64_t
 #endif
-
+*/
 #ifndef _GNU_SOURCE
   #define _GNU_SOURCE
   #include <sched.h>
