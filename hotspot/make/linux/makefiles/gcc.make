@@ -202,7 +202,8 @@ else
 endif
 
 # Compiler warnings are treated as errors
-WARNINGS_ARE_ERRORS = -Werror
+# WARNINGS_ARE_ERRORS = -Werror
+WARNINGS_ARE_ERRORS = -Werror=implicit-function-declaration
 
 ifeq ($(USE_CLANG), true)
   # However we need to clean the code up before we can unrestrictedly enable this option with Clang
@@ -276,8 +277,10 @@ endif
 #------------------------------------------------------------------------
 # Linker flags
 
-# statically link libstdc++.so, work with gcc but ignored by g++
-STATIC_STDCXX = -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic
+# statically link libc++.so, work with gcc but ignored by g++
+# STATIC_STDCXX = -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic
+
+STATIC_STDCXX = -Wl,-Bstatic -lsupc++ -Wl,-Bdynamic
 # While the VM needs the above line, adlc needs a separate setting:
 ADLC_STATIC_STDCXX = -static-libstdc++
 
