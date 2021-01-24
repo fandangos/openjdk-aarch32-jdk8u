@@ -36,6 +36,12 @@
 #include "runtime/os.hpp"
 #include "runtime/thread.inline.hpp"
 
+#ifdef __ANDROID__
+# define S_IREAD S_IRUSR
+# define S_IWRITE S_IWUSR
+# define S_IEXEC S_IXUSR
+#endif
+
 static JfrRepository* _instance = NULL;
 
 JfrRepository& JfrRepository::instance() {
