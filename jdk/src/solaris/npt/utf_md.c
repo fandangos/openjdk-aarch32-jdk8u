@@ -32,7 +32,7 @@
 # include <iconv.h>
 #else
 # include "langinfo.h"
-# include "iconv.h"
+# include <iconv.h>
 #endif
 
 #include "utf.h"
