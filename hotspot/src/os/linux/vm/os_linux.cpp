@@ -75,7 +75,7 @@
 # include <sys/stat.h>
 # include <sys/select.h>
 # include <pthread.h>
-//# include <signal.h>
+# include <signal.h>
 # include <errno.h>
 # include <dlfcn.h>
 # include <stdio.h>
@@ -93,17 +93,16 @@
 # include <semaphore.h>
 # include <fcntl.h>
 # include <string.h>
-# include <syscall.h>
 # include <sys/sysinfo.h>
-#ifdef __ANDROID__
-// Our own impl
- # include "gnu/libc-version.h"
-#elif !defined(__UCLIBC__)
+#if !defined(__UCLIBC__) && !defined(__ANDROID__)
 # include <gnu/libc-version.h>
 #endif
 # include <sys/ipc.h>
 #if !defined(__ANDROID__)
+# include <syscall.h>
 # include <sys/shm.h>
+#else
+# include <sys/syscall.h>
 #endif
 # include <link.h>
 # include <stdint.h>
@@ -111,6 +110,10 @@
 # include <sys/ioctl.h>
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
+
+#ifdef __ANDROID__
+# define DISABLE_SHM
+#endif
 
 #ifdef __ANDROID__
 # define lseek lseek64
@@ -605,6 +608,10 @@ void os::Linux::libpthread_init() {
 # define _CS_GNU_LIBPTHREAD_VERSION 3
 # endif
 
+#ifdef __ANDROID__
+  os::Linux::set_glibc_version("android bionic libc api-21");
+  os::Linux::set_libpthread_version("android bionic libc api-21 NPTL");
+#else
   size_t n = confstr(_CS_GNU_LIBC_VERSION, NULL, 0);
   if (n > 0) {
      char *str = (char *)malloc(n, mtInternal);
@@ -646,6 +653,7 @@ void os::Linux::libpthread_init() {
     // glibc before 2.3.2 only has LinuxThreads.
     os::Linux::set_libpthread_version("linuxthreads");
   }
+#endif // !__ANDROID__
 
   if (strstr(libpthread_version(), "NPTL")) {
      os::Linux::set_is_NPTL();
@@ -2441,6 +2449,13 @@ void os::jvm_path(char *buf, jint buflen) {
                 CAST_FROM_FN_PTR(address, os::jvm_path),
                 dli_fname, sizeof(dli_fname), NULL);
   assert(ret, "cannot locate libjvm");
+#ifdef __ANDROID__
+  char* java_home_var = ::getenv("JAVA_HOME");
+  if (java_home_var == NULL || dli_fname[0] == '\0') {
+    return;
+  }
+  snprintf(buf, buflen, /* "%s/lib/%s/server/%s", java_home_var, cpu_arch, */ dli_fname);
+#else // !__ANDROID__
   char *rp = NULL;
   if (ret && dli_fname[0] != '\0') {
     rp = realpath(dli_fname, buf);
@@ -2448,10 +2463,7 @@ void os::jvm_path(char *buf, jint buflen) {
   if (rp == NULL)
     return;
 
-// Try to locate libjvm.so on Android by use available method as below.
-#ifndef __ANDROID__
   if (Arguments::created_by_gamma_launcher()) {
-#endif // !__ANDROID__
     // Support for the gamma launcher.  Typical value for buf is
     // "<JAVA_HOME>/jre/lib/<arch>/<vmtype>/libjvm.so".  If "/jre/lib/" appears at
     // the right place in the string, then assume we are installed in a JDK and
@@ -2501,7 +2513,6 @@ void os::jvm_path(char *buf, jint buflen) {
         }
       }
     }
-#ifndef __ANDROID__
   }
 #endif // !__ANDROID__
 
@@ -3013,7 +3024,11 @@ void* os::Linux::libnuma_dlsym(void* handle, const char *name) {
 // Handle request to load libnuma symbol version 1.2 (API v2) only.
 // Return NULL if the symbol is not defined in this particular version.
 void* os::Linux::libnuma_v2_dlsym(void* handle, const char* name) {
+#ifndef __ANDROID__
   return dlvsym(handle, name, "libnuma_1.2");
+#else // __ANDROID__
+  return NULL;
+#endif // !__ANDROID__
 }
 
 bool os::Linux::libnuma_init() {
@@ -3622,6 +3637,13 @@ bool os::Linux::setup_large_page_type(size_t page_size) {
     UseHugeTLBFS = false;
   }
 
+#ifdef DISABLE_SHM
+  if (UseSHM) {
+    warning("UseSHM is disabled");
+    UseSHM = false;
+  }
+#endif  //DISABLE_SHM
+
   return UseSHM;
 }
 
@@ -3653,6 +3675,7 @@ void os::large_page_init() {
 #define SHM_HUGETLB 04000
 #endif
 
+#ifndef DISABLE_SHM
 #define shm_warning_format(format, ...)              \
   do {                                               \
     if (UseLargePages &&                             \
@@ -3744,8 +3767,10 @@ static char* shmat_large_pages(int shmid, size_t bytes, size_t alignment, char* 
     return shmat_at_address(shmid, NULL);
   }
 }
+#endif // !DISABLE_SHM
 
 char* os::Linux::reserve_memory_special_shm(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+#ifndef DISABLE_SHM
   // "exec" is passed in but not used.  Creating the shared image for
   // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages && UseSHM, "only for SHM large pages");
@@ -3788,6 +3813,10 @@ char* os::Linux::reserve_memory_special_shm(size_t bytes, size_t alignment, char
   shmctl(shmid, IPC_RMID, NULL);
 
   return addr;
+#else
+  assert(0, "SHM was disabled on compile time");
+  return NULL;
+#endif
 }
 
 static void warn_on_large_pages_failure(char* req_addr, size_t bytes, int error) {
@@ -3951,8 +3980,12 @@ char* os::reserve_memory_special(size_t bytes, size_t alignment, char* req_addr,
 }
 
 bool os::Linux::release_memory_special_shm(char* base, size_t bytes) {
+#ifndef DISABLE_SHM
   // detaching the SHM segment will also delete it, see reserve_memory_special_shm()
   return shmdt(base) == 0;
+#else
+  assert(0, "SHM was disabled on compile time");
+#endif
 }
 
 bool os::Linux::release_memory_special_huge_tlbfs(char* base, size_t bytes) {
@@ -5588,6 +5621,12 @@ bool os::dir_is_empty(const char* path) {
 #define O_DELETE 0x10000
 #endif
 
+#ifdef __ANDROID__
+int open64(const char* pathName, int flags, int mode) {
+  return ::open(pathName, flags, mode);
+}
+#endif //__ANDROID__
+
 // Open a file. Unlink the file immediately after open returns
 // if the specified oflag has the O_DELETE flag set.
 // O_DELETE is used only in j2se/src/share/native/java/util/zip/ZipFile.c
@@ -5659,7 +5698,10 @@ int os::open(const char *path, int oflag, int mode) {
   return fd;
 }
 
-
+#ifdef __ANDROID__
+#define S_IREAD S_IRUSR
+#define S_IWRITE S_IWUSR
+#endif
 // create binary file, rewriting existing file if required
 int os::create_binary_file(const char* path, bool rewrite_existing) {
   int oflags = O_WRONLY | O_CREAT;
