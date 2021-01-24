@@ -23,10 +23,15 @@
  * questions.
  */
 
+/*
 #ifdef HEADLESS
     #error This file should not be included in headless library
 #endif
+*/
 
+#ifdef __ANDROID__
+# include "awt.h"
+#endif
 #include "awt_p.h"
 #include "java_awt_Component.h"
 
@@ -36,14 +41,27 @@
 #include <jni_util.h>
 #include <jawt_md.h>
 
+#include "awt_GraphicsEnv.h"
+
+
+// FIXME awt_TopLevel.c not found
+#ifndef __ANDROID__
 extern struct ComponentIDs componentIDs;
 
-#include "awt_GraphicsEnv.h"
 extern jfieldID windowID;
 extern jfieldID targetID;
 extern jfieldID graphicsConfigID;
 extern jfieldID drawStateID;
 extern struct X11GraphicsConfigIDs x11GraphicsConfigIDs;
+#else
+struct ComponentIDs componentIDs;
+
+jfieldID windowID;
+jfieldID targetID;
+jfieldID graphicsConfigID;
+jfieldID drawStateID;
+struct X11GraphicsConfigIDs x11GraphicsConfigIDs;
+#endif
 
 /*
  * Lock the surface of the target component for native rendering.
@@ -160,7 +178,11 @@ JNIEXPORT int32_t JNICALL
             JNU_GetLongFieldAsPtr(env, gc_object,
                                   x11GraphicsConfigIDs.aData);
     } else {
+#ifndef __ANDROID__
         adata = getDefaultConfig(DefaultScreen(awt_display));
+#else
+        adata = getDefaultConfig(0);
+#endif
     }
 
     result = adata->AwtColorMatch(r, g, b, adata);
@@ -232,13 +254,29 @@ awt_DrawingSurface_GetDrawingSurfaceInfo(JAWT_DrawingSurface* ds)
 
     /* Set drawable and display */
     px->drawable = (*env)->GetLongField(env, peer, windowID);
+/*
+#ifdef __ANDROID__
+    Display fake_awt_display;
+    awt_display = &fake_awt_display;
+    awt_display->proto_major_version = 11;
+    awt_display->proto_minor_version = 7;
+    awt_display->vendor = "Android Xlib";
+#endif
+*/
     px->display = awt_display;
 
     /* Get window attributes to set other values */
+#if !defined(__ANDROID__) && !defined(HEADLESS)
     XGetWindowAttributes(awt_display, (Window)(px->drawable), &attrs);
 
-    /* Set the other values */
     px->visualID = XVisualIDFromVisual(attrs.visual);
+#else
+    px->visualID = TrueColor;
+    attrs.colormap = 1; // FIXME!
+    attrs.depth = 24;
+#endif
+
+    /* Set the other values */
     px->colormapID = attrs.colormap;
     px->depth = attrs.depth;
     px->GetAWTColor = awt_GetColor;
