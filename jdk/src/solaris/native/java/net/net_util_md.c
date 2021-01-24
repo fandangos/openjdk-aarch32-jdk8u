@@ -36,7 +36,11 @@
 #include <sys/time.h>
 
 #ifndef _ALLBSD_SOURCE
-#include <values.h>
+# ifndef __ANDROID__
+# include <values.h>
+# else
+# include "values.h"
+# endif
 #else
 #include <limits.h>
 #include <sys/param.h>
@@ -52,7 +56,7 @@
 #include <inet/nd.h>
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__ANDROID__)
 #include <arpa/inet.h>
 #include <net/route.h>
 #include <sys/utsname.h>
@@ -577,7 +581,9 @@ static void initLoopbackRoutes() {
          */
         if ( (dest_plen < 0 || dest_plen > 128)  ||
              (src_plen != 0) ||
+#ifndef __ANDROID__
              (flags & (RTF_POLICY | RTF_FLOW)) ||
+#endif
              ((flags & RTF_REJECT) && dest_plen == 0) ) {
             continue;
         }
@@ -667,6 +673,12 @@ static int nifs = 0;            /* number of entries used in array */
 /* not thread safe: make sure called once from one thread */
 
 static void initLocalIfs () {
+/* Android port:
+ * - Android 5.x cause crashes.
+ * - Android 6+ read /proc/net/if_inet6 gives "permission denied", so it skips.
+ * So, skip them to fix Android 5.x crashes.
+ */
+#ifndef __ANDROID__
     FILE *f;
     unsigned char staddr [16];
     char ifname [33];
@@ -715,6 +727,7 @@ static void initLocalIfs () {
         lif->index = index;
     }
     fclose (f);
+#endif
 }
 
 /* return the scope_id (interface index) of the
@@ -1105,7 +1118,9 @@ int getDefaultIPv6Interface(struct in6_addr *target_addr) {
          */
         if ( (dest_plen < 0 || dest_plen > 128)  ||
              (src_plen != 0) ||
+#ifndef __ANDROID__
              (flags & (RTF_POLICY | RTF_FLOW)) ||
+#endif
              ((flags & RTF_REJECT) && dest_plen == 0) ) {
             continue;
         }
