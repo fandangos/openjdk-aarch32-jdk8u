@@ -48,6 +48,7 @@ void *findFunction(JNIEnv *env, jlong jHandle, const char *functionName) {
 JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_Secmod_nssGetLibraryHandle
   (JNIEnv *env, jclass thisClass, jstring jLibName)
 {
+    void *hModule;
     const char *libName = (*env)->GetStringUTFChars(env, jLibName, NULL);
     if (libName == NULL) {
         return 0L;
@@ -55,9 +56,13 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_Secmod_nssGetLibraryHandle
 
     // look up existing handle only, do not load
 #if defined(AIX)
-    void *hModule = dlopen(libName, RTLD_LAZY);
+    hModule = dlopen(libName, RTLD_LAZY);
 #else
-    void *hModule = dlopen(libName, RTLD_NOLOAD);
+#ifdef __ANDROID__
+    hModule = (void*)dlopen(libName, RTLD_LOCAL);
+#else
+    hModule = dlopen(libName, RTLD_NOLOAD);
+#endif
 #endif
     dprintf2("-handle for %s: %u\n", libName, hModule);
     (*env)->ReleaseStringUTFChars(env, jLibName, libName);
