@@ -27,8 +27,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include <langinfo.h>
-#include <iconv.h>
+#ifndef __ANDROID__
+# include <langinfo.h>
+# include <iconv.h>
+#else
+# include "langinfo.h"
+# include "iconv.h"
+#endif
 
 #include "utf.h"
 
