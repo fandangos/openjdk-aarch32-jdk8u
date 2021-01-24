@@ -2448,7 +2448,10 @@ void os::jvm_path(char *buf, jint buflen) {
   if (rp == NULL)
     return;
 
+// Try to locate libjvm.so on Android by use available method as below.
+#ifndef __ANDROID__
   if (Arguments::created_by_gamma_launcher()) {
+#endif // !__ANDROID__
     // Support for the gamma launcher.  Typical value for buf is
     // "<JAVA_HOME>/jre/lib/<arch>/<vmtype>/libjvm.so".  If "/jre/lib/" appears at
     // the right place in the string, then assume we are installed in a JDK and
@@ -2498,7 +2501,9 @@ void os::jvm_path(char *buf, jint buflen) {
         }
       }
     }
+#ifndef __ANDROID__
   }
+#endif // !__ANDROID__
 
   strncpy(saved_jvm_path, buf, MAXPATHLEN);
 }
@@ -2994,7 +2999,7 @@ extern "C" JNIEXPORT int fork1() { return fork(); }
 // Handle request to load libnuma symbol version 1.1 (API v1). If it fails
 // load symbol from base version instead.
 void* os::Linux::libnuma_dlsym(void* handle, const char *name) {
-#ifndef __UCLIBC__
+#if !defined(__UCLIBC__) && !defined(__ANDROID__)
   void *f = dlvsym(handle, name, "libnuma_1.1");
   if (f == NULL) {
     f = dlsym(handle, name);
@@ -5906,7 +5911,7 @@ bool os::is_thread_cpu_time_supported() {
 // Linux doesn't yet have a (official) notion of processor sets,
 // so just return the system wide load average.
 int os::loadavg(double loadavg[], int nelem) {
-#ifndef __UCLIBC__
+#if !defined(__UCLIBC__) && !defined(__ANDROID__)
   return ::getloadavg(loadavg, nelem);
 #else
   return -1;
