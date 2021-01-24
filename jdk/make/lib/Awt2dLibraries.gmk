@@ -23,6 +23,8 @@
 # questions.
 #
 
+X_LIBS :=
+
 WIN_AWT_LIB := $(JDK_OUTPUTDIR)/objs/libawt/awt.lib
 
 ##########################################################################################
@@ -558,7 +560,8 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
       LIBAWT_XAWT_CFLAGS += -DINTERNAL_BUILD
     endif
 
-    LIBAWT_XAWT_FILES := \
+    LIBAWT_XAWT_FILES := list.c
+    LIBAWT_XAWT_FILES_Z := \
         XlibWrapper.c \
         XWindow.c \
         XToolkit.c \
@@ -616,8 +619,8 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
         sun_awt_X11_GtkFileDialogPeer.c \
         XRSurfaceData.c \
         XRBackendNative.c
-
-    LIBAWT_XAWT_LDFLAGS_SUFFIX := $(LIBM) -lawt -lXext -lX11 -lXrender $(LIBDL) -lXtst -lXi -ljava -ljvm -lc
+    # -lXext -lX11 -lXrender -lXtst -lXi
+    LIBAWT_XAWT_LDFLAGS_SUFFIX := $(LIBM) -lawt $(LIBDL) -ljava -ljvm -lc
 
     ifeq ($(OPENJDK_TARGET_OS), linux)
       # To match old build, add this to LDFLAGS instead of suffix.
@@ -792,15 +795,29 @@ ifeq ($(BUILD_HEADLESS), true)
         -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/jdga \
         $(foreach dir, $(LIBAWT_HEADLESS_DIRS), -I$(dir))
 
+#        X11Renderer.c 
+#        X11PMBlitLoops.c
+#        X11SurfaceData.c
+
+# TODO: Port below to GL4ES/Android GLES renderer.
+#        GLXGraphicsConfig.c
+#        GLXSurfaceData.c
+
+#        awt_DrawingSurface.c
+#        awt_GraphicsEnv.c
+#        awt_UNIXToolkit.c
+
     LIBAWT_HEADLESS_FILES := \
+        awt_AWTEvent.c \
+        awt_Event.c \
         awt_Font.c \
+        awt_Insets.c \
+        awt_Robot.c \
+        awt_util.c \
         HeadlessToolkit.c \
         fontpath.c \
         VDrawingArea.c \
         X11Color.c \
-        X11Renderer.c \
-        X11PMBlitLoops.c \
-        X11SurfaceData.c \
         X11FontScaler_md.c \
         X11TextRenderer_md.c \
         OGLBlitLoops.c \
@@ -815,11 +832,9 @@ ifeq ($(BUILD_HEADLESS), true)
         OGLSurfaceData.c \
         OGLTextRenderer.c \
         OGLVertexCache.c \
-        GLXGraphicsConfig.c \
-        GLXSurfaceData.c \
         AccelGlyphCache.c \
         CUPSfuncs.c
-
+    
     LIBAWT_HEADLESS_REORDER :=
     ifeq ($(OPENJDK_TARGET_OS), solaris)
       ifneq ($(OPENJDK_TARGET_CPU), x86_64)
@@ -914,8 +929,8 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBFONTMANAGER, \
     EXCLUDE_FILES := $(LIBFONTMANAGER_EXCLUDE_FILES) \
         AccelGlyphCache.c, \
     LANG := C++, \
-    CFLAGS := $(CFLAGS_JDKLIB) $(BUILD_LIBFONTMANAGER_CFLAGS_COMMON), \
-    CXXFLAGS := $(CXXFLAGS_JDKLIB) $(BUILD_LIBFONTMANAGER_CFLAGS_COMMON), \
+    CFLAGS := $(CFLAGS_JDKLIB) -fno-rtti $(BUILD_LIBFONTMANAGER_CFLAGS_COMMON), \
+    CXXFLAGS := $(CXXFLAGS_JDKLIB) -fno-rtti $(BUILD_LIBFONTMANAGER_CFLAGS_COMMON), \
     OPTIMIZATION := $(LIBFONTMANAGER_OPTIMIZATION), \
     CFLAGS_windows = -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/windows \
         -DCC_NOEX, \
@@ -924,7 +939,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBFONTMANAGER, \
         $(subst -Wl$(COMMA)-z$(COMMA)defs,,$(LDFLAGS_JDKLIB))) $(LDFLAGS_CXX_JDK) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_SUFFIX := $(BUILD_LIBFONTMANAGER_FONTLIB), \
-    LDFLAGS_SUFFIX_linux := -lawt $(LIBM) $(LIBCXX) -ljava -ljvm -lc, \
+    LDFLAGS_SUFFIX_linux := -lawt -lawt_headless $(LIBM) -lsupc++ -ljava -ljvm -lc, \
     LDFLAGS_SUFFIX_solaris := -lawt -lawt_headless -lc $(LIBM) $(LIBCXX) -ljava -ljvm, \
     LDFLAGS_SUFFIX_aix := -lawt -lawt_headless $(LIBM) $(LIBCXX) -ljava -ljvm,\
     LDFLAGS_SUFFIX_macosx := -lawt $(LIBM) $(LIBCXX) -undefined dynamic_lookup \
@@ -1052,12 +1067,12 @@ else # OPENJDK_TARGET_OS not windows
     ifneq ($(OPENJDK_TARGET_OS), solaris)
       JAWT_LIBS += -lawt
     endif
-    ifndef BUILD_HEADLESS_ONLY
-      JAWT_LIBS += -lawt_xawt
-    else
+    # ifndef BUILD_HEADLESS_ONLY
+      # JAWT_LIBS += -lawt_xawt
+    # else
       JAWT_LIBS += -lawt_headless
       HEADLESS_CFLAG += -DHEADLESS
-    endif
+    # endif
   endif
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBJAWT, \
@@ -1083,11 +1098,11 @@ else # OPENJDK_TARGET_OS not windows
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjawt, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  ifndef BUILD_HEADLESS_ONLY
-    $(BUILD_LIBJAWT): $(BUILD_LIBAWT_XAWT)
-  else
+  # ifndef BUILD_HEADLESS_ONLY
+    # $(BUILD_LIBJAWT): $(BUILD_LIBAWT_XAWT)
+  # else
     $(BUILD_LIBJAWT): $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)awt_headless$(SHARED_LIBRARY_SUFFIX)
-  endif
+  # endif
 
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     $(BUILD_LIBJAWT): $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)awt_lwawt$(SHARED_LIBRARY_SUFFIX)
@@ -1195,7 +1210,8 @@ ifndef BUILD_HEADLESS_ONLY
   else ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBSPLASHSCREEN_LDFLAGS_SUFFIX += kernel32.lib user32.lib gdi32.lib delayimp.lib -DELAYLOAD:user32.dll
   else
-    LIBSPLASHSCREEN_LDFLAGS_SUFFIX += $(X_LIBS) -lX11 -lXext $(LIBM) -lpthread
+    # $(X_LIBS) -lX11 -lXext
+    LIBSPLASHSCREEN_LDFLAGS_SUFFIX += $(LIBM) -lpthread
   endif
 
   $(eval $(call SetupNativeCompilation,LIBSPLASHSCREEN, \
@@ -1219,7 +1235,7 @@ ifndef BUILD_HEADLESS_ONLY
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsplashscreen, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(LIBSPLASHSCREEN)
+  # BUILD_LIBRARIES += $(LIBSPLASHSCREEN)
 
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     $(LIBSPLASHSCREEN): $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)osxapp$(SHARED_LIBRARY_SUFFIX)
