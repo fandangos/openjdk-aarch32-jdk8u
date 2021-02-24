@@ -74,7 +74,7 @@
 
 typedef XRenderPictFormat *
 XRenderFindVisualFormatFunc (Display *dpy, _Xconst Visual *visual);
-
+#include "color.h"
 typedef struct _AwtGraphicsConfigData  {
     int         awt_depth;
     Colormap    awt_cmap;

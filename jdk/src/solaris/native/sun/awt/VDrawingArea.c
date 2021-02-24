@@ -35,7 +35,7 @@
 
 #ifdef __linux__
 /* XXX: Shouldn't be necessary. */
-#include "awt_p.h"
+//#include "awt_p.h"
 #endif /* __linux__ */
 
 

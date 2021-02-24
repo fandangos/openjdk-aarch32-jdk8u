@@ -29,6 +29,8 @@
 #define _XLOCALE_H_
 #include <sys/cdefs.h>
 /* If we just use void* here, GCC exposes that in error messages. */
+#ifndef _BITS_TYPES_LOCALE_T_H
 struct __locale_t;
 typedef struct __locale_t* locale_t;
+#endif
 #endif /* _XLOCALE_H_ */

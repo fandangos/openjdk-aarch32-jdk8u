@@ -35,6 +35,8 @@ typedef struct {
     ImgColorData clrdata;
     ImgConvertFcn *convert[NUM_IMGCV];
 } awtImageData;
+#else
+typedef struct {int d;} awtImageData; 
 #endif /* __ANDROID__ || (!HEADLESS && !MACOSX) */
 
 #endif           /* _COLOR_H_ */

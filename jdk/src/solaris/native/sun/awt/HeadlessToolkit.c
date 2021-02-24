@@ -41,4 +41,34 @@ JNIEXPORT jboolean JNICALL AWTIsHeadless() {
     return JNI_TRUE;
 }
 
+JNIEXPORT void JNICALL
+Java_java_awt_Component_initIDs
+  (JNIEnv *env, jclass cls)
+{
+
+}
+
+
+JNIEXPORT void JNICALL
+Java_java_awt_Container_initIDs
+  (JNIEnv *env, jclass cls)
+{
+
+}
+
+
+JNIEXPORT void JNICALL
+Java_java_awt_Window_initIDs
+  (JNIEnv *env, jclass cls)
+{
+
+}
+
+JNIEXPORT void JNICALL
+Java_java_awt_Frame_initIDs
+  (JNIEnv *env, jclass cls)
+{
+
+}
+
 #endif

@@ -32,7 +32,7 @@
 #include "jvm_md.h"
 #include <dlfcn.h>
 
-#include "awt_p.h"
+//#include "awt_p.h"
 #include "awt_GraphicsEnv.h"
 #define XK_MISCELLANY
 #include <X11/keysymdef.h>

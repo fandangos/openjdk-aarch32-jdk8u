@@ -37,8 +37,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#endif /* !HEADLESS */
 #include "awt_p.h"
+#endif /* !HEADLESS */
 #include "java_awt_Color.h"
 #include "java_awt_SystemColor.h"
 #include "java_awt_color_ColorSpace.h"

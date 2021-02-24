@@ -808,6 +808,7 @@ ifeq ($(BUILD_HEADLESS), true)
 #        awt_UNIXToolkit.c
 
     LIBAWT_HEADLESS_FILES := \
+        XToolkit.c \
         awt_AWTEvent.c \
         awt_Event.c \
         awt_Font.c \
